@@ -43,8 +43,8 @@ async function handleRequest(request: Request) {
       headers,
     });
 
-    const $ = cheerio.load(res);
-    console.log( $.html() )
+    //const $ = cheerio.load(res);
+    console.log( res.text() )
     
     return res
   }
