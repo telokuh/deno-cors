@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 var base = "https://corss.deno.dev/"
+var target = "https://doujindesu.tv"
 function addCorsIfNeeded(response: Response) {
   const headers = new Headers(response.headers);
 
@@ -45,7 +46,7 @@ async function handleRequest(request: Request) {
     function crot(x, y){
     $(x).each( function(){
         var u = $(this).attr(y)
-        if( u && u.startsWith("http") ){
+        if( u && u.startsWith(target) ){
           $(this).attr(y, base+u)
         }
     })
