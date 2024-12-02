@@ -38,7 +38,7 @@ async function handleRequest(request: Request) {
       return new Response(null, { headers: corsHeaders });
     }
     const response = await fetch(url, request)
-    console.log( request )
+    
     var text = await response.text()
     var tipe = response.headers.get("Content-Type")
     const headers = addCorsIfNeeded(response);
@@ -66,7 +66,7 @@ async function handleRequest(request: Request) {
         re = text
     }
     
-    var res = new Response( re.replace('"/theme', `"${target}/theme`, {
+    var res = new Response( re.replace('"/theme', `"${target}/theme`), {
       status: response.status,
       statusText: response.statusText,
       headers,
