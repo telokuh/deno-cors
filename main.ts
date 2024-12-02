@@ -66,7 +66,7 @@ async function handleRequest(request: Request) {
         re = text
     }
     
-    var res = new Response( re, {
+    var res = new Response( re.replace('"/theme', `"${target}/theme`, {
       status: response.status,
       statusText: response.statusText,
       headers,
