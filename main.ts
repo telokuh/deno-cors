@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
-
+import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 function addCorsIfNeeded(response: Response) {
   const headers = new Headers(response.headers);
 
@@ -34,12 +34,7 @@ async function handleRequest(request: Request) {
     if (request.method.toUpperCase() === "OPTIONS") {
       return new Response(null, { headers: corsHeaders });
     }
-
-    const response = await fetch(url, request).then(function(response) {
-    return response
-  }).then(function(data) {
-    console.log(data); // this will be a string
-  });
+    const response = await fetch(url, request)
     
     const headers = addCorsIfNeeded(response);
     var res = new Response(response.body, {
@@ -47,7 +42,9 @@ async function handleRequest(request: Request) {
       statusText: response.statusText,
       headers,
     });
-    
+
+    const $ = cheerio.load(res);
+    console.log( $.html() )
     
     return res
   }
