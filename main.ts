@@ -40,12 +40,9 @@ async function handleRequest(request: Request) {
     var text = await response.text()
     var tipe = response.headers.get("Content-Type")
     const headers = addCorsIfNeeded(response);
-    var $ = ""
-      if (tipe.includes("html"){
-        $ = cheerio.load(text);
-      } else {
-        $ = cheerio.load(text, null, false);
-      }
+    
+    $ = cheerio.load(text);
+      
     $("script:contains('mydomain'), script[src^='//']").remove()
 
     function crot(x, y){
@@ -64,7 +61,7 @@ async function handleRequest(request: Request) {
     if (tipe.includes("html"){
         re = $.html();
       } else {
-        re = text
+        re = decodeURIComponent(text)
     }
     
     var res = new Response( re, {
