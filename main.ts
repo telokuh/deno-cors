@@ -38,7 +38,7 @@ async function handleRequest(request: Request) {
     const response = await fetch(url, request)
     var text = await response.text()
     const headers = addCorsIfNeeded(response);
-    const $ = cheerio.load(text,null,false);
+    const $ = cheerio.load(text, null ,false);
 
     $("script:contains('mydomain')").remove()
 
@@ -52,6 +52,7 @@ async function handleRequest(request: Request) {
     }
     crot("link", "href")
     crot("script", "src")
+    $("head").append('<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>')
     var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
