@@ -44,7 +44,7 @@ async function handleRequest(request: Request) {
     });
 
     //const $ = cheerio.load(res);
-    console.log( res.text() )
+    console.log( await res.text() )
     
     return res
   }
