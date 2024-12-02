@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
-import * as cheerio from "https://dev.jspm.io/npm:cheerio/index.js";
+
+import { cheerio } from "https://deno.land/x/cheerio@1.0.7/mod.ts";
 var base = "https://corss.deno.dev/"
 var target = "https://doujindesu.tv"
 function addCorsIfNeeded(response: Response) {
