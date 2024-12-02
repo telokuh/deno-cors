@@ -57,7 +57,7 @@ async function handleRequest(request: Request) {
     }
     crot("a", "href")
     var re = ""
-    if ( tipe.includes("html") ){
+    if ( tipe && tipe.includes("html") ){
         re = $.html();
       } else {
         re = text
