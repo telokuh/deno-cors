@@ -45,7 +45,7 @@ async function handleRequest(request: Request) {
     
     const $ = cheerio.load(text);
       
-    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//'], script:contains('disqus')").remove()
+    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//'], script:contains('disqus'), script:contains('Klik Kanan')").remove()
 
     function crot(x, y){
     $(x).each( function(){
