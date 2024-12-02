@@ -37,14 +37,14 @@ async function handleRequest(request: Request) {
     const response = await fetch(url, request)
     
     const headers = addCorsIfNeeded(response);
-    var res = new Response(response.body, {
+    var res = JSON.stringify( new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
       headers,
-    });
+    }) )
 
 
-    return {"ok": JSON.stringify(res)}
+    return res
   }
 
   const readme = await Deno.readTextFile("./README.md");
