@@ -38,10 +38,15 @@ async function handleRequest(request: Request) {
     }
     const response = await fetch(url, request)
     var text = await response.text()
+    var tipe = response.headers.get("Content-Type")
     const headers = addCorsIfNeeded(response);
-    const $ = cheerio.load(text, null ,false);
-    
-    $("script:contains('mydomain')").remove()
+    var $ = ""
+      if (tipe.includes("html"){
+        $ = cheerio.load(text);
+      } else {
+        $ = cheerio.load(text, null, false);
+      }
+    $("script:contains('mydomain'), script[src*='isola']").remove()
 
     function crot(x, y){
     $(x).each( function(){
