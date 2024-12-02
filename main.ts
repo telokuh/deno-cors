@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
-
+ 
 function addCorsIfNeeded(response: Response) {
   const headers = new Headers(response.headers);
 
