@@ -38,13 +38,14 @@ async function handleRequest(request: Request) {
       return new Response(null, { headers: corsHeaders });
     }
     const response = await fetch(url, request)
+    console.log( request )
     var text = await response.text()
     var tipe = response.headers.get("Content-Type")
     const headers = addCorsIfNeeded(response);
     
     const $ = cheerio.load(text);
       
-    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//']").remove()
+    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//'], script:contains('disqus')").remove()
 
     function crot(x, y){
     $(x).each( function(){
