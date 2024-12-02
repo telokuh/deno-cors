@@ -43,11 +43,8 @@ async function handleRequest(request: Request) {
       headers,
     });
 
-    const $ = cheerio.load(await res.text() );
-    
-    
-    console.log( $("body").html() )
-    return await res
+
+    return {"ok": JSON.stringify(res)}
   }
 
   const readme = await Deno.readTextFile("./README.md");
