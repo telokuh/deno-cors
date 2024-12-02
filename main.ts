@@ -40,7 +40,7 @@ async function handleRequest(request: Request) {
     var text = await response.text()
     const headers = addCorsIfNeeded(response);
     const $ = cheerio.load(text, null ,false);
-    var tipe = response.headers.get("Content-Type")
+    
     $("script:contains('mydomain')").remove()
 
     function crot(x, y){
@@ -60,8 +60,6 @@ async function handleRequest(request: Request) {
       headers,
     }) 
     
-   console.log( tipe )
-  console.log( headers )
     return res
   }
 
