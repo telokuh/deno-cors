@@ -41,7 +41,7 @@ async function handleRequest(request: Request) {
     var tipe = response.headers.get("Content-Type")
     const headers = addCorsIfNeeded(response);
     
-    $ = cheerio.load(text);
+    const $ = cheerio.load(text);
       
     $("script:contains('mydomain'), script[src^='//']").remove()
 
