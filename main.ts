@@ -62,7 +62,7 @@ async function handleRequest(request: Request) {
     if ( tipe.includes("html") ){
         re = $.html();
       } else {
-        re = decodeURIComponent(text)
+        re = text
     }
     
     var res = new Response( re, {
