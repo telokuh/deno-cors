@@ -35,14 +35,19 @@ async function handleRequest(request: Request) {
       return new Response(null, { headers: corsHeaders });
     }
 
-    const response = await fetch(url, request);
+    const response = await fetch(url, request)
+                          .then(ress => {
+                             console.log(ress.text)
+    
+                             return ress.text()
+                            });
     const headers = addCorsIfNeeded(response);
     var res = new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
       headers,
     });
-    console.log(response.text)
+    
     
     return res
   }
