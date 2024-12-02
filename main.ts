@@ -36,7 +36,7 @@ async function handleRequest(request: Request) {
     }
 
     const response = await fetch(url, request);
-    console.log( await response.text() );
+    console.log( response.text() );
     const headers = addCorsIfNeeded(response);
     var res = new Response(response.body, {
       status: response.status,
