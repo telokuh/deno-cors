@@ -40,7 +40,7 @@ async function handleRequest(request: Request) {
     var text = await response.text()
     const headers = addCorsIfNeeded(response);
     const $ = cheerio.load(text, null ,false);
-
+    var tipe = response.headers.get("Content-Type")
     $("script:contains('mydomain')").remove()
 
     function crot(x, y){
@@ -59,9 +59,10 @@ async function handleRequest(request: Request) {
       statusText: response.statusText,
       headers,
     }) 
-    var tipe = response.headers.get("Content-Type")
+    
    console.log( tipe )
-    return res.headers.append("Content-Type", tipe)
+  console.log( headers )
+    return res
   }
 
   const readme = await Deno.readTextFile("./README.md");
