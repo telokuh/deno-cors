@@ -27,8 +27,8 @@ function isUrl(url: string) {
 }
 
 async function handleRequest(request: Request) {
-  const { pathname, search } = new URL(request.url);
-  const url = pathname.substring(1) + search;
+  //const { pathname, search } = new URL(request.url);
+  const url = target //pathname.substring(1) + search;
 
   if (isUrl(url)) {
     console.log("proxy to %s", url);
@@ -73,7 +73,7 @@ async function handleRequest(request: Request) {
        return res
     
   }
-
+  /*
   const readme = await Deno.readTextFile("./README.md");
   const body = render(readme);
   const html = `<!DOCTYPE html>
@@ -106,7 +106,7 @@ async function handleRequest(request: Request) {
     headers: {
       "content-type": "text/html;charset=utf-8",
     },
-  });
+  }); */
 }
 
 const port = Deno.env.get("PORT") ?? "8000";
