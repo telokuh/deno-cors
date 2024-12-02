@@ -36,7 +36,7 @@ async function handleRequest(request: Request) {
     }
 
     const response = await fetch(url, request).then(function(response) {
-    return response.text();
+    return response
   }).then(function(data) {
     console.log(data); // this will be a string
   });
