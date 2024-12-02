@@ -51,7 +51,7 @@ async function handleRequest(request: Request) {
         }
     })
     }
-    crot("link", "href")
+    crot("link[rel='stylesheet']", "href")
     crot("script", "src")
     $("script#jquery-js").attr("src", "https://code.jquery.com/jquery-3.7.1.min.js")
     var res = new Response( $.html(), {
