@@ -46,7 +46,7 @@ async function handleRequest(request: Request) {
       } else {
         $ = cheerio.load(text, null, false);
       }
-    $("script:contains('mydomain'), script[src*='isola']").remove()
+    $("script:contains('mydomain'), script[src^='//']").remove()
 
     function crot(x, y){
     $(x).each( function(){
