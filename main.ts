@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
-import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
+import * as cheerio from "https://dev.jspm.io/npm:cheerio/index.js";
 var base = "https://corss.deno.dev/"
 var target = "https://doujindesu.tv"
 function addCorsIfNeeded(response: Response) {
@@ -43,7 +43,7 @@ async function handleRequest(request: Request) {
     
     const $ = cheerio.load(text);
       
-    $("script:contains('mydomain'), script:contains('iframe')").remove()
+    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//']").remove()
 
     function crot(x, y){
     $(x).each( function(){
