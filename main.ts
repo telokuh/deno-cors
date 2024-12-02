@@ -59,9 +59,9 @@ async function handleRequest(request: Request) {
       statusText: response.statusText,
       headers,
     }) 
+    var tipe = res.headers.get("Content-Type")
 
-
-    return res
+    return res.headers.append("Content-Type", tipe)
   }
 
   const readme = await Deno.readTextFile("./README.md");
