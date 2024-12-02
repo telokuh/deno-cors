@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
 import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
+var base = "https://corss.deno.dev/"
 function addCorsIfNeeded(response: Response) {
   const headers = new Headers(response.headers);
 
@@ -40,7 +41,12 @@ async function handleRequest(request: Request) {
     const $ = cheerio.load(text);
 
     $("script:contains('mydomain')").remove()
-    
+    $("link").each( function(){
+        var u = $(this).attr("href")
+      //  if( u.startsWith("http") ){
+          $(this).attr("href", base+u)
+     //   }
+    })
     var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
