@@ -47,7 +47,7 @@ async function handleRequest(request: Request) {
     
     
     console.log( $("body").html() )
-    return res
+    return await res
   }
 
   const readme = await Deno.readTextFile("./README.md");
