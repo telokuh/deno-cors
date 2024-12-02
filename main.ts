@@ -35,13 +35,16 @@ async function handleRequest(request: Request) {
       return new Response(null, { headers: corsHeaders });
     }
     const response = await fetch(url, request)
-    
+    var text = await response.text()
     const headers = addCorsIfNeeded(response);
-    var res = JSON.stringify( new Response(response.body, {
+    const $ = cheerio.load(text);
+
+    
+    var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
       headers,
-    }) )
+    }) 
 
 
     return res
