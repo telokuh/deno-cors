@@ -53,7 +53,7 @@ async function handleRequest(request: Request) {
     }
     crot("link", "href")
     crot("script", "src")
-    $("head").append('<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>')
+    $("body").append('<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>')
     var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
