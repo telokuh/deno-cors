@@ -41,12 +41,17 @@ async function handleRequest(request: Request) {
     const $ = cheerio.load(text);
 
     $("script:contains('mydomain')").remove()
-    $("link").each( function(){
-        var u = $(this).attr("href")
+
+    function crot(x, y){
+    $(x).each( function(){
+        var u = $(this).attr(y)
       //  if( u.startsWith("http") ){
           $(this).attr("href", base+u)
      //   }
     })
+    }
+    crot("link", "href")
+    crot("script", "src")
     var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
