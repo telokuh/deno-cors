@@ -59,8 +59,8 @@ async function handleRequest(request: Request) {
       statusText: response.statusText,
       headers,
     }) 
-    var tipe = res.headers.get("Content-Type")
-
+    var tipe = response.headers.get("Content-Type")
+   console.log( tipe )
     return res.headers.append("Content-Type", tipe)
   }
 
