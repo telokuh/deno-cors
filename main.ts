@@ -39,6 +39,7 @@ async function handleRequest(request: Request) {
     const headers = addCorsIfNeeded(response);
     const $ = cheerio.load(text);
 
+    $("script:contains('mydomain')").remove()
     
     var res = new Response( $.html(), {
       status: response.status,
