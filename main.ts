@@ -42,7 +42,7 @@ async function handleRequest(request: Request) {
       statusText: response.statusText,
       headers,
     });
-    console.log(res)
+    console.log(response.body)
     
     return res
   }
