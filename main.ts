@@ -45,9 +45,9 @@ async function handleRequest(request: Request) {
     function crot(x, y){
     $(x).each( function(){
         var u = $(this).attr(y)
-      //  if( u.startsWith("http") ){
+        if( u.startsWith("http") ){
           $(this).attr("href", base+u)
-     //   }
+        }
     })
     }
     crot("link", "href")
