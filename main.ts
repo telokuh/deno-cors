@@ -46,7 +46,7 @@ async function handleRequest(request: Request) {
     $(x).each( function(){
         var u = $(this).attr(y)
         if( u && u.startsWith("http") ){
-          $(this).attr("href", base+u)
+          $(this).attr(y, base+u)
         }
     })
     }
