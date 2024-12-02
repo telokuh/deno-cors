@@ -49,7 +49,7 @@ async function handleRequest(request: Request) {
     $(x).each( function(){
         var u = $(this).attr(y)
         if( u && u.startsWith(target) ){
-          $(this).attr(y, u.replace(target, '')
+          $(this).attr(y, u.replace(target, '') )
         }
     })
     }
