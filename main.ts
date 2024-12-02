@@ -59,6 +59,7 @@ async function handleRequest(request: Request) {
     crot("link[rel='stylesheet']", "href")
     crot("script", "src")
     $("script#jquery-js").attr("src", "https://code.jquery.com/jquery-3.7.1.min.js")
+    $("link[href*='doujin.css']").attr("href", "https://vangke.xtgem.com/text.css")
     var res = new Response( $.html(), {
       status: response.status,
       statusText: response.statusText,
