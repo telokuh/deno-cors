@@ -60,13 +60,21 @@ async function handleRequest(request: Request) {
     crot("script", "src")
     $("script#jquery-js").attr("src", "https://code.jquery.com/jquery-3.7.1.min.js")
     $("head > link:nth-child(34)").attr("href", "https://vangke.xtgem.com/text.css")
-    var res = new Response( $.html(), {
+    var re = ""
+    if (tipe.includes("html"){
+        re = $.html();
+      } else {
+        re = text
+    }
+    
+    var res = new Response( re, {
       status: response.status,
       statusText: response.statusText,
       headers,
     }) 
     
-    return res
+       return res
+    
   }
 
   const readme = await Deno.readTextFile("./README.md");
