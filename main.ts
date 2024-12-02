@@ -43,13 +43,13 @@ async function handleRequest(request: Request) {
     
     const $ = cheerio.load(text);
       
-    $("script:contains('mydomain'), script[src^='//']").remove()
+    $("script:contains('mydomain'), script:contains('iframe')").remove()
 
     function crot(x, y){
     $(x).each( function(){
         var u = $(this).attr(y)
         if( u && u.startsWith(target) ){
-          $(this).attr(y, base+u)
+          $(this).attr(y, u.replace(target, '')
         }
     })
     }
