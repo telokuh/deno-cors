@@ -1,4 +1,4 @@
-import puppeteer from 'https://deno.land/x/puppeteer@19.0.0/mod.ts';
+import puppeteer from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
 
 async function scrapeDoujinDesu() {
     const browser = await puppeteer.launch();
