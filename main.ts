@@ -1,6 +1,6 @@
-import puppeteer from 'https://deno.land/x/puppeteer@v9.1.1';
+import puppeteer from 'https://deno.land/x/puppeteer@16.2.0/mod.ts';
 import StealthPlugin from 'https://deno.land/x/puppeteer_extra@v1.4.0/plugin/stealth';
-import { Page } from 'https://deno.land/x/puppeteer@v9.1.1/puppeteer.d.ts';
+import { Page } from 'https://deno.land/x/puppeteer@v16.2.0/puppeteer.d.ts';
 
 const targetUrl = 'https://doujindesu.tv/'; // Replace with your desired URL
 
