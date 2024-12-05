@@ -1,113 +1,48 @@
-import { serve } from "https://deno.land/std@0.181.0/http/server.ts";
-import { CSS, render } from "https://deno.land/x/gfm@0.1.22/mod.ts";
+import puppeteer from 'https://deno.land/x/puppeteer@v9.1.1';
+import StealthPlugin from 'https://deno.land/x/puppeteer_extra@v1.4.0/plugin/stealth';
+import { Page } from 'https://deno.land/x/puppeteer@v9.1.1/puppeteer.d.ts';
 
-import { cheerio } from "https://deno.land/x/cheerio@1.0.7/mod.ts";
-var base = "https://corss.deno.dev/"
-var target = "https://tv8.lk21official.my"
-function addCorsIfNeeded(response: Response) {
-  const headers = new Headers(response.headers);
+const targetUrl = 'https://doujindesu.tv/'; // Replace with your desired URL
 
-  if (!headers.has("access-control-allow-origin")) {
-    headers.set("access-control-allow-origin", "*");
-  }
-
-  return headers;
-}
-
-function isUrl(url: string) {
-  if (!url.startsWith("http://") && !url.startsWith("https://")) {
-    return false;
-  }
-
+async function scrapeDoujindesu() {
   try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-}
+    const puppeteer = await puppeteer.launch({ headless: false }); // Adjust headless mode as needed
+    const browser = await puppeteer.browser();
+    const page = await browser.newPage();
 
-async function handleRequest(request: Request) {
-  const { pathname, search } = new URL(request.url);
-  const url = target + pathname + search;
+    // Add StealthPlugin for enhanced anti-detection (optional)
+    await StealthPlugin().use(browser);
 
-  if (isUrl(url)) {
-    console.log("proxy to %s", url);
-    const corsHeaders = addCorsIfNeeded(new Response());
-    if (request.method.toUpperCase() === "OPTIONS") {
-      return new Response(null, { headers: corsHeaders });
-    }
-    const response = await fetch(url, request)
-    
-    var text = await response.text()
-    var tipe = response.headers.get("Content-Type")
-    const headers = addCorsIfNeeded(response);
-    
-    const $ = cheerio.load(text);
-      
-    $("script:contains('mydomain'), script:contains('iframe'), script[src^='//'], script:contains('disqus'), script:contains('Klik Kanan')").remove()
+    await page.goto(targetUrl);
 
-    function crot(x, y){
-    $(x).each( function(){
-        var u = $(this).attr(y)
-        if( u && u.startsWith(target) ){
-          $(this).attr(y, u.replace(target, '') )
+    // Wait for page to load (adjust selectors based on doujindesu.tv's structure)
+    await page.waitForSelector('.manga-list-item'); // Replace with appropriate selector
+
+    const scrapedData = await page.evaluate(() => {
+      const mangaItems = document.querySelectorAll('.manga-list-item'); // Replace with appropriate selector
+      const results: { title: string; url: string }[] = [];
+
+      mangaItems.forEach((item) => {
+        const titleElement = item.querySelector('.manga-title'); // Replace with appropriate selector
+        const urlElement = item.querySelector('.manga-link'); // Replace with appropriate selector
+
+        if (titleElement && urlElement) {
+          results.push({
+            title: titleElement.textContent.trim(),
+            url: urlElement.getAttribute('href'),
+          });
         }
-    })
-    }
-    crot("a", "href")
-    var re = ""
-    if ( tipe && tipe.includes("html") ){
-        re = $.html();
-      } else {
-        re = text
-    }
-    
-    var res = new Response( re, {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    }) 
-    
-       return res
-    
+      });
+
+      return results;
+    });
+
+    console.log('Scraped Data:', scrapedData);
+
+    await browser.close();
+  } catch (error) {
+    console.error('Error:', error);
   }
-  /*
-  const readme = await Deno.readTextFile("./README.md");
-  const body = render(readme);
-  const html = `<!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CORS Proxy</title>
-        <style>
-          body {
-            margin: 0;
-            background-color: var(--color-canvas-default);
-            color: var(--color-fg-default);
-          }
-          main {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-          }
-          ${CSS}
-        </style>
-      </head>
-      <body data-color-mode="auto" data-light-theme="light" data-dark-theme="dark">
-        <main class="markdown-body">
-          ${body}
-        </main>
-      </body>
-    </html>`;
-  return new Response(html, {
-    headers: {
-      "content-type": "text/html;charset=utf-8",
-    },
-  }); */
 }
 
-const port = Deno.env.get("PORT") ?? "8000";
-
-serve(handleRequest, { port: Number(port) });
+scrapeDoujindesu();
