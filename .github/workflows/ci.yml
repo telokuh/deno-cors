@@ -48,13 +48,15 @@ jobs:
             console.log(\`Navigating to \${url}\`);
             await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-            // Find the download button using its class and wait for it to be visible
+            // Wait for the download button to be visible
             await page.waitForSelector('.download_btn_link');
             
-            // Get the href attribute from the download button
+            // Corrected code: Use page.$eval to get the href attribute
             const directLink = await page.$eval('.download_btn_link', (element) => element.getAttribute('href'));
             
-            const filename = directLink.split('/').pop();
+            // Use the URL to extract the filename
+            const urlParts = directLink.split('/');
+            const filename = urlParts[urlParts.length - 1].replace(/\?.*/, '');
             
             console.log(\`Found direct download link: \${directLink}\`);
             console.log(\`Extracted filename: \${filename}\`);
