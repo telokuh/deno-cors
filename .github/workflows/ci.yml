@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mediafire_page_url:
-        description: 'URL Halaman MediaFire (URL yang menampilkan tombol "Download")'
+        description: 'URL Halaman MediaFire'
         required: true
-        default: 'https://www.mediafire.com/file/...'
+        default: ''
       release_tag:
         description: 'Tag rilis untuk mengunggah aset'
         required: true
@@ -19,45 +19,43 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract direct download URL
-        id: get_download_url
+      - name: Install yt-dlp
         run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+          sudo chmod a+rx /usr/local/bin/yt-dlp
+
+      - name: Extract direct download URL and filename using yt-dlp
+        id: get_download_info
+        run: |
+          # Use yt-dlp to get the direct download URL
+          # The -g flag outputs the URL
+          # The --get-filename flag outputs the original filename
           PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
           
-          # Attempt to fetch the HTML content and extract the download URL
-          # This pattern looks for URLs starting with 'https://download' followed by numbers,
-          # then a long string of alphanumeric characters and underscores,
-          # and then the file path part of the URL.
-          DOWNLOAD_URL=$(curl -sL "$PAGE_URL" | grep -o 'https://download[0-9]\{3,\}\.mediafire\.com/[a-zA-Z0-9_\-]*\/[a-zA-Z0-9\/_-]*\.zip')
-          
-          if [[ -z "$DOWNLOAD_URL" ]]; then
-            echo "Error: Could not extract download URL from the provided page. Please check the URL and MediaFire's current structure."
+          # Use --print-json to get structured output
+          DOWNLOAD_INFO=$(yt-dlp --print-json "$PAGE_URL")
+          DOWNLOAD_URL=$(echo "$DOWNLOAD_INFO" | jq -r '."url"')
+          FILENAME=$(echo "$DOWNLOAD_INFO" | jq -r '."_filename"')
+
+          if [[ -z "$DOWNLOAD_URL" || "$DOWNLOAD_URL" == "null" ]]; then
+            echo "Error: Could not extract download URL from the provided page."
             exit 1
           fi
 
           echo "Extracted Download URL: $DOWNLOAD_URL"
           echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
-          
-          # Extract a valid filename from the URL. This part might need adjustment
-          # depending on how the filename is actually encoded in the URL.
-          # For now, let's try to get the part after the last slash.
-          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///')
-          
-          # Basic sanitization for filename
-          FILENAME=$(echo "$FILENAME" | sed 's/[^a-zA-Z0-9._-]//g')
-          
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Download file using the direct URL
+      - name: Download file using wget
         run: |
-          # Use wget to download the file, and save it with the extracted filename
-          # Add --content-disposition to try and use the filename from the server if available
-          wget --content-disposition -O "${{ steps.get_download_url.outputs.filename }}" "${{ steps.get_download_url.outputs.download_url }}"
+          wget -O "${{ steps.get_download_info.outputs.filename }}" "${{ steps.get_download_info.outputs.download_url }}"
 
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}
-          artifacts: "${{ steps.get_download_url.outputs.filename }}"
+          artifacts: "${{ steps.get_download_info.outputs.filename }}"
           allowUpdates: true
