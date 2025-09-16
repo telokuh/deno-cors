@@ -1,20 +1,16 @@
-name: Download & Upload to GitHub Release
+name: Download MediaFire to GitHub Release
 
 on:
   workflow_dispatch:
     inputs:
       mediafire_page_url:
-        description: 'URL halaman MediaFire (halaman dengan tombol Download)'
+        description: 'URL Halaman MediaFire (URL yang menampilkan tombol "Download")'
         required: true
-        default: ''
+        default: 'https://www.mediafire.com/file/...'
       release_tag:
         description: 'Tag rilis untuk mengunggah aset'
         required: true
         default: 'v1.0.0'
-      asset_name:
-        description: 'Nama file yang akan diunggah ke rilis (tanpa ekstensi)'
-        required: true
-        default: 'downloaded_file'
 
 jobs:
   download_and_upload:
@@ -23,41 +19,36 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Direct Download URL from MediaFire Page
-        id: extract_url
+      - name: Extract direct download URL
+        id: get_download_url
         run: |
+          # Use curl to fetch the HTML content of the MediaFire page
+          # Then use grep to find the line containing the download link pattern
+          # Finally, use sed to extract the clean URL and remove surrounding text
           PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
+          DOWNLOAD_URL=$(curl -sL "$PAGE_URL" | grep -o 'https://download[0-9]*\.mediafire\.com/file_premium[^"]*')
           
-          # Download the HTML content of the MediaFire page
-          HTML_CONTENT=$(curl -s "$PAGE_URL")
-          
-          # Extract the download URL using grep. This pattern looks for a link that starts with "https://download" and ends with ".zip" or ".rar",
-          # which is common for MediaFire direct download links. You might need to adjust this regex if MediaFire changes its HTML structure.
-          DOWNLOAD_URL=$(echo "$HTML_CONTENT" | grep -o 'https?://[^"]*\.\(zip\|rar\)[^"]*' | head -n 1)
-          
-          # Extract the filename from the extracted URL
-          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///')
-          
-          if [ -z "$DOWNLOAD_URL" ]; then
-            echo "ERROR: Could not extract download URL from the provided page."
+          if [[ -z "$DOWNLOAD_URL" ]]; then
+            echo "Error: Could not extract download URL from the provided page."
             exit 1
           fi
-          
+
           echo "Extracted Download URL: $DOWNLOAD_URL"
-          echo "Extracted Filename: $FILENAME"
           echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          
+          # Extract a valid filename from the URL, replacing non-alphanumeric chars with underscore
+          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///' | sed 's/[^a-zA-Z0-9._-]//g')
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Download file from extracted URL
+      - name: Download file using the direct URL
         run: |
-          # Use the extracted URL to download the file
-          # The -L flag is crucial here to follow any redirects
-          curl -L -o "${{ github.event.inputs.asset_name }}.${{ steps.extract_url.outputs.filename }}" "${{ steps.extract_url.outputs.download_url }}"
-          
+          # Use wget to download the file, and save it with the extracted filename
+          wget -O "${{ steps.get_download_url.outputs.filename }}" "${{ steps.get_download_url.outputs.download_url }}"
+
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}
-          artifacts: "${{ github.event.inputs.asset_name }}.${{ steps.extract_url.outputs.filename }}"
+          artifacts: "${{ steps.get_download_url.outputs.filename }}"
           allowUpdates: true
