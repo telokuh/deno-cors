@@ -1,20 +1,20 @@
-name: Download & Upload to GitHub Release (with yt-dlp)
+name: Download & Upload to GitHub Release
 
 on:
   workflow_dispatch:
     inputs:
       mediafire_page_url:
-        description: 'URL Halaman MediaFire (yang menampilkan tombol Download)'
+        description: 'URL halaman MediaFire (halaman dengan tombol Download)'
         required: true
         default: ''
       release_tag:
         description: 'Tag rilis untuk mengunggah aset'
         required: true
         default: 'v1.0.0'
-      asset_name_prefix:
-        description: 'Awalan nama file yang akan diunggah ke rilis (misal: myapp)'
+      asset_name:
+        description: 'Nama file yang akan diunggah ke rilis (tanpa ekstensi)'
         required: true
-        default: 'downloaded_asset'
+        default: 'downloaded_file'
 
 jobs:
   download_and_upload:
@@ -23,44 +23,41 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python and yt-dlp
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x' # Gunakan versi Python terbaru
-
-      - name: Install yt-dlp
-        run: |
-          pip install --upgrade yt-dlp
-
-      - name: Extract download URL and filename using yt-dlp
+      - name: Extract Direct Download URL from MediaFire Page
         id: extract_url
         run: |
-          # yt-dlp -g (get URL) flag will output the direct download URL
-          # yt-dlp --get-filename flag will output the default filename
-          # --no-check-certificate is sometimes needed if SSL certs are an issue
-          DOWNLOAD_URL=$(yt-dlp -g --no-check-certificate "${{ github.event.inputs.mediafire_page_url }}" | tail -n 1)
-          echo "Extracted Download URL: $DOWNLOAD_URL"
-          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
           
-          # Extract filename from the URL, or let yt-dlp provide a default if it can't parse
-          # yt-dlp's --get-filename provides a good default name
-          FILENAME=$(yt-dlp --get-filename -o "%(title)s.%(ext)s" --no-check-certificate "${{ github.event.inputs.mediafire_page_url }}" | tail -n 1)
+          # Download the HTML content of the MediaFire page
+          HTML_CONTENT=$(curl -s "$PAGE_URL")
+          
+          # Extract the download URL using grep. This pattern looks for a link that starts with "https://download" and ends with ".zip" or ".rar",
+          # which is common for MediaFire direct download links. You might need to adjust this regex if MediaFire changes its HTML structure.
+          DOWNLOAD_URL=$(echo "$HTML_CONTENT" | grep -o 'https?://[^"]*\.\(zip\|rar\)[^"]*' | head -n 1)
+          
+          # Extract the filename from the extracted URL
+          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///')
+          
+          if [ -z "$DOWNLOAD_URL" ]; then
+            echo "ERROR: Could not extract download URL from the provided page."
+            exit 1
+          fi
+          
+          echo "Extracted Download URL: $DOWNLOAD_URL"
           echo "Extracted Filename: $FILENAME"
+          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Download file
+      - name: Download file from extracted URL
         run: |
-          # Use curl to download the file using the extracted URL
-          # The -L flag is still good practice to follow any final redirects
-          # We're using the output filename from yt-dlp
-          echo "Downloading file from $DOWNLOAD_URL to ${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}"
-          curl -L -o "${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}" "${{ steps.extract_url.outputs.download_url }}"
-
+          # Use the extracted URL to download the file
+          # The -L flag is crucial here to follow any redirects
+          curl -L -o "${{ github.event.inputs.asset_name }}.${{ steps.extract_url.outputs.filename }}" "${{ steps.extract_url.outputs.download_url }}"
+          
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}
-          # Construct the full artifact path with the prefix and extracted filename
-          artifacts: "${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}"
+          artifacts: "${{ github.event.inputs.asset_name }}.${{ steps.extract_url.outputs.filename }}"
           allowUpdates: true
