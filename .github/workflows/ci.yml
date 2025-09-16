@@ -22,28 +22,37 @@ jobs:
       - name: Extract direct download URL
         id: get_download_url
         run: |
-          # Use curl to fetch the HTML content of the MediaFire page
-          # Then use grep to find the line containing the download link pattern
-          # Finally, use sed to extract the clean URL and remove surrounding text
           PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
-          DOWNLOAD_URL=$(curl -sL "$PAGE_URL" | grep -o 'https://download[0-9]*\.mediafire\.com/file_premium[^"]*')
+          
+          # Attempt to fetch the HTML content and extract the download URL
+          # This pattern looks for URLs starting with 'https://download' followed by numbers,
+          # then a long string of alphanumeric characters and underscores,
+          # and then the file path part of the URL.
+          DOWNLOAD_URL=$(curl -sL "$PAGE_URL" | grep -o 'https://download[0-9]\{3,\}\.mediafire\.com/[a-zA-Z0-9_\-]*\/[a-zA-Z0-9\/_-]*\.zip')
           
           if [[ -z "$DOWNLOAD_URL" ]]; then
-            echo "Error: Could not extract download URL from the provided page."
+            echo "Error: Could not extract download URL from the provided page. Please check the URL and MediaFire's current structure."
             exit 1
           fi
 
           echo "Extracted Download URL: $DOWNLOAD_URL"
           echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
           
-          # Extract a valid filename from the URL, replacing non-alphanumeric chars with underscore
-          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///' | sed 's/[^a-zA-Z0-9._-]//g')
+          # Extract a valid filename from the URL. This part might need adjustment
+          # depending on how the filename is actually encoded in the URL.
+          # For now, let's try to get the part after the last slash.
+          FILENAME=$(echo "$DOWNLOAD_URL" | sed 's/.*\///')
+          
+          # Basic sanitization for filename
+          FILENAME=$(echo "$FILENAME" | sed 's/[^a-zA-Z0-9._-]//g')
+          
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
       - name: Download file using the direct URL
         run: |
           # Use wget to download the file, and save it with the extracted filename
-          wget -O "${{ steps.get_download_url.outputs.filename }}" "${{ steps.get_download_url.outputs.download_url }}"
+          # Add --content-disposition to try and use the filename from the server if available
+          wget --content-disposition -O "${{ steps.get_download_url.outputs.filename }}" "${{ steps.get_download_url.outputs.download_url }}"
 
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
