@@ -31,9 +31,9 @@ jobs:
         run: |
           PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
           
-          # Use --no-warnings to suppress unnecessary output
-          # Use --print-json to get structured output for easy parsing with jq
-          DOWNLOAD_INFO=$(yt-dlp --no-warnings --print-json "$PAGE_URL")
+          # Add --force-generic-extractor to bypass specific extractors and use the generic one
+          # Also, use --no-warnings to keep the output clean
+          DOWNLOAD_INFO=$(yt-dlp --no-warnings --force-generic-extractor --print-json "$PAGE_URL")
           
           if [[ -z "$DOWNLOAD_INFO" ]]; then
             echo "Error: yt-dlp failed to get info from the page URL."
