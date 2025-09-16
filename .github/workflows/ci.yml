@@ -1,25 +1,66 @@
-name: ci
+name: Download & Upload to GitHub Release (with yt-dlp)
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+    inputs:
+      mediafire_page_url:
+        description: 'URL Halaman MediaFire (yang menampilkan tombol Download)'
+        required: true
+        default: ''
+      release_tag:
+        description: 'Tag rilis untuk mengunggah aset'
+        required: true
+        default: 'v1.0.0'
+      asset_name_prefix:
+        description: 'Awalan nama file yang akan diunggah ke rilis (misal: myapp)'
+        required: true
+        default: 'downloaded_asset'
 
 jobs:
-  build:
-    name: ${{ matrix.kind }} ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [macOS-latest, ubuntu-latest, windows-latest]
-
+  download_and_upload:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Deno
-        uses: denoland/setup-deno@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Format
-        run: deno fmt --check
+      - name: Set up Python and yt-dlp
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x' # Gunakan versi Python terbaru
 
-      - name: Check
-        run: deno check --remote main.ts
+      - name: Install yt-dlp
+        run: |
+          pip install --upgrade yt-dlp
 
-      - name: Lint
-        run: deno lint
+      - name: Extract download URL and filename using yt-dlp
+        id: extract_url
+        run: |
+          # yt-dlp -g (get URL) flag will output the direct download URL
+          # yt-dlp --get-filename flag will output the default filename
+          # --no-check-certificate is sometimes needed if SSL certs are an issue
+          DOWNLOAD_URL=$(yt-dlp -g --no-check-certificate "${{ github.event.inputs.mediafire_page_url }}" | tail -n 1)
+          echo "Extracted Download URL: $DOWNLOAD_URL"
+          echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
+          
+          # Extract filename from the URL, or let yt-dlp provide a default if it can't parse
+          # yt-dlp's --get-filename provides a good default name
+          FILENAME=$(yt-dlp --get-filename -o "%(title)s.%(ext)s" --no-check-certificate "${{ github.event.inputs.mediafire_page_url }}" | tail -n 1)
+          echo "Extracted Filename: $FILENAME"
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+
+      - name: Download file
+        run: |
+          # Use curl to download the file using the extracted URL
+          # The -L flag is still good practice to follow any final redirects
+          # We're using the output filename from yt-dlp
+          echo "Downloading file from $DOWNLOAD_URL to ${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}"
+          curl -L -o "${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}" "${{ steps.extract_url.outputs.download_url }}"
+
+      - name: Upload to GitHub Release
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.release_tag }}
+          # Construct the full artifact path with the prefix and extracted filename
+          artifacts: "${{ github.event.inputs.asset_name_prefix }}-${{ steps.extract_url.outputs.filename }}"
+          allowUpdates: true
