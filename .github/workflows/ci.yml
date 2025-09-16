@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mediafire_page_url:
-        description: 'URL Halaman MediaFire'
+        description: 'URL Halaman MediaFire (URL yang menampilkan tombol "Download")'
         required: true
         default: ''
       release_tag:
@@ -19,25 +19,30 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install yt-dlp
+      - name: Install yt-dlp and dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg
+          sudo apt-get install -y ffmpeg jq
           sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
           sudo chmod a+rx /usr/local/bin/yt-dlp
-
+          
       - name: Extract direct download URL and filename using yt-dlp
         id: get_download_info
         run: |
-          # Use yt-dlp to get the direct download URL
-          # The -g flag outputs the URL
-          # The --get-filename flag outputs the original filename
           PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
           
-          # Use --print-json to get structured output
-          DOWNLOAD_INFO=$(yt-dlp --print-json "$PAGE_URL")
-          DOWNLOAD_URL=$(echo "$DOWNLOAD_INFO" | jq -r '."url"')
-          FILENAME=$(echo "$DOWNLOAD_INFO" | jq -r '."_filename"')
+          # Use --no-warnings to suppress unnecessary output
+          # Use --print-json to get structured output for easy parsing with jq
+          DOWNLOAD_INFO=$(yt-dlp --no-warnings --print-json "$PAGE_URL")
+          
+          if [[ -z "$DOWNLOAD_INFO" ]]; then
+            echo "Error: yt-dlp failed to get info from the page URL."
+            exit 1
+          fi
+
+          # Extract URL and filename using jq
+          DOWNLOAD_URL=$(echo "$DOWNLOAD_INFO" | jq -r '.url // ""')
+          FILENAME=$(echo "$DOWNLOAD_INFO" | jq -r '._filename // ""')
 
           if [[ -z "$DOWNLOAD_URL" || "$DOWNLOAD_URL" == "null" ]]; then
             echo "Error: Could not extract download URL from the provided page."
@@ -48,7 +53,7 @@ jobs:
           echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
-      - name: Download file using wget
+      - name: Download file with wget
         run: |
           wget -O "${{ steps.get_download_info.outputs.filename }}" "${{ steps.get_download_info.outputs.download_url }}"
 
