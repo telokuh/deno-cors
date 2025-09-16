@@ -1,12 +1,12 @@
-name: Download MediaFire to GitHub Release
+name: Download MediaFire to GitHub Release (via Puppeteer)
 
 on:
   workflow_dispatch:
     inputs:
       mediafire_page_url:
-        description: 'URL Halaman MediaFire (URL yang menampilkan tombol "Download")'
+        description: 'URL Halaman MediaFire'
         required: true
-        default: ''
+        default: 'https://www.mediafire.com/file_premium/dwa3274aece6bax/GH-Saves_Part4_v0.54and-up.zip/file'
       release_tag:
         description: 'Tag rilis untuk mengunggah aset'
         required: true
@@ -19,48 +19,73 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install yt-dlp and dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Puppeteer and Dependencies
         run: |
+          npm install puppeteer
           sudo apt-get update
-          sudo apt-get install -y ffmpeg jq
-          sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-          sudo chmod a+rx /usr/local/bin/yt-dlp
-          
-      - name: Extract direct download URL and filename using yt-dlp
-        id: get_download_info
+          sudo apt-get install -yq chromium-browser
+
+      - name: Run Puppeteer to get download link
+        id: get_link_and_download
         run: |
-          PAGE_URL="${{ github.event.inputs.mediafire_page_url }}"
-          
-          # Add --force-generic-extractor to bypass specific extractors and use the generic one
-          # Also, use --no-warnings to keep the output clean
-          DOWNLOAD_INFO=$(yt-dlp --no-warnings --force-generic-extractor --print-json "$PAGE_URL")
-          
-          if [[ -z "$DOWNLOAD_INFO" ]]; then
-            echo "Error: yt-dlp failed to get info from the page URL."
-            exit 1
-          fi
+          cat << EOF > get_link.js
+          const puppeteer = require('puppeteer');
+          const fs = require('fs');
 
-          # Extract URL and filename using jq
-          DOWNLOAD_URL=$(echo "$DOWNLOAD_INFO" | jq -r '.url // ""')
-          FILENAME=$(echo "$DOWNLOAD_INFO" | jq -r '._filename // ""')
+          (async () => {
+            const browser = await puppeteer.launch({
+              args: ['--no-sandbox'],
+              executablePath: '/usr/bin/chromium-browser'
+            });
+            const page = await browser.newPage();
+            const url = process.argv[2];
 
-          if [[ -z "$DOWNLOAD_URL" || "$DOWNLOAD_URL" == "null" ]]; then
-            echo "Error: Could not extract download URL from the provided page."
-            exit 1
-          fi
+            console.log(\`Navigating to \${url}\`);
+            await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-          echo "Extracted Download URL: $DOWNLOAD_URL"
+            // Find the download button using its class and wait for it to be visible
+            await page.waitForSelector('.download_btn_link');
+            
+            // Get the href attribute from the download button
+            const directLink = await page.$eval('.download_btn_link', (element) => element.getAttribute('href'));
+            
+            const filename = directLink.split('/').pop();
+            
+            console.log(\`Found direct download link: \${directLink}\`);
+            console.log(\`Extracted filename: \${filename}\`);
+            
+            fs.writeFileSync('download_info.json', JSON.stringify({
+              url: directLink,
+              filename: filename
+            }));
+
+            await browser.close();
+          })();
+          EOF
+
+          # Execute the Puppeteer script
+          node get_link.js "${{ github.event.inputs.mediafire_page_url }}"
+
+          # Read the output from the JSON file
+          DOWNLOAD_URL=$(jq -r '.url' download_info.json)
+          FILENAME=$(jq -r '.filename' download_info.json)
+
           echo "download_url=$DOWNLOAD_URL" >> $GITHUB_OUTPUT
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
 
       - name: Download file with wget
         run: |
-          wget -O "${{ steps.get_download_info.outputs.filename }}" "${{ steps.get_download_info.outputs.download_url }}"
+          wget --content-disposition -O "${{ steps.get_link_and_download.outputs.filename }}" "${{ steps.get_link_and_download.outputs.download_url }}"
 
       - name: Upload to GitHub Release
         uses: ncipollo/release-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.event.inputs.release_tag }}
-          artifacts: "${{ steps.get_download_info.outputs.filename }}"
+          artifacts: "${{ steps.get_link_and_download.outputs.filename }}"
           allowUpdates: true
