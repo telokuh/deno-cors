@@ -11,7 +11,7 @@ const GITHUB_TOKEN = Deno.env.get("GITHUB_TOKEN");
 const CLIENT_ID = Deno.env.get("CLIENT_ID");
 const CLIENT_SECRET = Deno.env.get("CLIENT_SECRET");
 const REDIRECT_URI = Deno.env.get("REDIRECT_URI"); // URL publik bot Anda
-
+console.log(BOT_TOKEN)
 // Konfigurasi GitHub Repository
 const GITHUB_REPO_OWNER = Deno.env.get("GITHUB_REPO_OWNER") || "telokuh";
 const GITHUB_REPO_NAME = Deno.env.get("GITHUB_REPO_NAME") || "sonto";
